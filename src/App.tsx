@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Palette } from 'lucide-react';
 import StepIndicator from './components/StepIndicator';
+import ApiKeySetup from './components/ApiKeySetup';
 import Step1 from './components/Step1';
 import Step2 from './components/Step2';
 import Step3 from './components/Step3';
@@ -8,9 +9,11 @@ import Step4 from './components/Step4';
 import Step5 from './components/Step5';
 import { FormData } from './types';
 import { generateLogoConcepts } from './utils/logoGenerator';
+import { stabilityAI } from './services/stabilityAI';
 
 function App() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [showApiKeySetup, setShowApiKeySetup] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     companyName: '',
     sector: '',
@@ -25,6 +28,12 @@ function App() {
     refinements: ''
   });
 
+  const handleApiKeySet = (apiKey: string) => {
+    // Update the service with the new API key
+    (stabilityAI as any).apiKey = apiKey;
+    setShowApiKeySetup(false);
+  };
+
   const updateFormData = (data: Partial<FormData>) => {
     setFormData(prev => ({ ...prev, ...data }));
   };
@@ -34,6 +43,12 @@ function App() {
       // Gerar conceitos antes de ir para o step 4
       const concepts = generateLogoConcepts(formData);
       updateFormData({ concepts });
+      
+      // Check if we should show API key setup
+      if (!stabilityAI.isConfigured() && !sessionStorage.getItem('stability_api_key')) {
+        setShowApiKeySetup(true);
+        return;
+      }
     }
     setCurrentStep(prev => Math.min(prev + 1, 5));
   };
@@ -60,6 +75,10 @@ function App() {
   };
 
   const renderCurrentStep = () => {
+    if (showApiKeySetup) {
+      return <ApiKeySetup onApiKeySet={handleApiKeySet} />;
+    }
+
     switch (currentStep) {
       case 1:
         return <Step1 formData={formData} updateFormData={updateFormData} onNext={handleNext} />;
@@ -99,11 +118,24 @@ function App() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
-        <StepIndicator currentStep={currentStep} totalSteps={5} />
+        {!showApiKeySetup && (
+          <StepIndicator currentStep={currentStep} totalSteps={5} />
+        )}
         
         <div className="bg-white/30 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
           {renderCurrentStep()}
         </div>
+
+        {currentStep === 4 && !showApiKeySetup && !stabilityAI.isConfigured() && (
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => setShowApiKeySetup(true)}
+              className="text-purple-600 hover:text-purple-700 font-medium underline"
+            >
+              Configurar Stability AI para gerar visualizações
+            </button>
+          </div>
+        )}
       </main>
 
       {/* Footer */}

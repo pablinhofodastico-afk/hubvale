@@ -1,6 +1,7 @@
 import React from 'react';
 import { Palette, Type, Target, Sparkles } from 'lucide-react';
 import { FormData, LogoConcept } from '../types';
+import LogoPreview from './LogoPreview';
 
 interface Step4Props {
   formData: FormData;
@@ -59,7 +60,7 @@ const ConceptCard: React.FC<{ concept: LogoConcept; index: number }> = ({ concep
   );
 };
 
-const Step4: React.FC<Step4Props> = ({ formData, onNext, onBack }) => {
+const Step4: React.FC<Step4Props> = ({ formData, updateFormData, onNext, onBack }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onNext();
@@ -78,7 +79,14 @@ const Step4: React.FC<Step4Props> = ({ formData, onNext, onBack }) => {
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-1 mb-8">
         {formData.concepts.map((concept, index) => (
-          <ConceptCard key={concept.id} concept={concept} index={index} />
+          <div key={concept.id} className="space-y-4">
+            <ConceptCard concept={concept} index={index} />
+            <LogoPreview 
+              concept={concept} 
+              companyName={formData.companyName}
+              index={index}
+            />
+          </div>
         ))}
       </div>
 
